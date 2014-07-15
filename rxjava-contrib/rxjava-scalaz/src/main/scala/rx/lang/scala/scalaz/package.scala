@@ -30,8 +30,8 @@ package object scalaz {
     override def append(f1: Observable[A], f2: => Observable[A]): Observable[A] = f1 ++ f2
   }
 
-  implicit val observableInstances = new MonadPlus[Observable] with Zip[Observable]
-    with IsEmpty[Observable] with Traverse[Observable] {
+  implicit val observableInstances = new Traverse[Observable] with IsEmpty[Observable]
+    with Zip[Observable] with MonadPlus[Observable]  {
 
     // Monad
     override def point[A](a: => A) = Observable.items(a)
