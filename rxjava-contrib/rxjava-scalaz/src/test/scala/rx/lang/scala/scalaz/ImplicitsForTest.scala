@@ -15,14 +15,16 @@
  */
 package rx.lang.scala.scalaz
 
+import scala.language.higherKinds
 import scalaz._
 import rx.lang.scala.Observable
 import org.scalacheck.Arbitrary
+import scalaz.scalacheck.ScalaCheckBinding._
 import scala.concurrent.{Await, Promise}
 import scala.concurrent.duration.Duration
 
 /**
- * This object provides implicits for tests.
+ * This object provides implicits for tests only.
  */
 object ImplicitsForTest {
 
@@ -39,7 +41,11 @@ object ImplicitsForTest {
     }
   }
 
+  implicit def observableShow[A](implicit showA: Show[A], showLA:Show[List[A]])
+  = Show.shows[Observable[A]](ob => "Observable" +
+      Show.showContravariant.contramap[List[A],Observable[A]](showLA)(_.toBlocking.toList).show(ob))
+
   implicit def observableArbitrary[A](implicit a: Arbitrary[A], array: Arbitrary[Array[A]]): Arbitrary[Observable[A]]
-  = Arbitrary(for (arr <- array.arbitrary) yield Observable.items(arr:_*))
+  = Functor[Arbitrary].map(array)(Observable.items(_:_*))
 
 }

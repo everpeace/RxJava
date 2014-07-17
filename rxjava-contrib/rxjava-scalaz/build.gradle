@@ -31,7 +31,7 @@ dependencies {
     compile 'org.scalaz:scalaz-core_2.10:7.0.4'
 
     testCompile 'org.scalaz:scalaz-scalacheck-binding_2.10:7.0.4'
-    testCompile 'org.typelevel:scalaz-specs2_2.10:0.1.2'
+    testCompile 'org.typelevel:scalaz-specs2_2.10:0.1.5'
     testCompile 'junit:junit-dep:4.10'
 }
 

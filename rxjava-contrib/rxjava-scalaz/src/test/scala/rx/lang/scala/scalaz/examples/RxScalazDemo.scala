@@ -15,7 +15,11 @@
  */
 package rx.lang.scala.scalaz.examples
 
-import org.specs2.scalaz.Spec
+
+import scala.language.higherKinds
+
+import org.specs2.matcher.AnyMatchers
+import org.specs2.scalaz.{ScalazMatchers, Spec}
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import rx.lang.scala.Observable
@@ -24,74 +28,63 @@ import scalaz._
 import Scalaz._
 
 /**
- * This demonstrates how you can apply Scalaz's operators to Observables.
+ * This demonstrates how you apply Scalaz's operators to Observables.
  */
 @RunWith(classOf[JUnitRunner])
-class RxScalazDemo extends Spec {
+class RxScalazDemo extends Spec with AnyMatchers with ScalazMatchers{
 
   import rx.lang.scala.scalaz._
   import ImplicitsForTest._
 
-  "RxScalazDemo" should {
-    "Monoid Operators" >> {
-      "can apply to Observables" in {
-        (items(1, 2) |+| items(3, 4)) === items(1, 2, 3, 4)
-        (items(1, 2) ⊹ items(3, 4)) === items(1, 2, 3, 4)
-        mzero[Observable[Int]] === Observable.empty
-      }
+  "Observable" should {
+    "be applied to Monoid operators" in {
+      (items(1, 2) |+| items(3, 4)) must equal(items(1, 2, 3, 4))
+      (items(1, 2) ⊹   items(3, 4)) must equal(items(1, 2, 3, 4))
+      mzero[Observable[Int]] must equal(Observable.empty)
     }
 
-    "Functor Operators" >> {
-      "can apply to Observables" in {
-        (items(1, 2) ∘ {_ + 1}) === items(2, 3)
-        (items(1, 2) >| 5) === items(5, 5)
-        (items(1, 2) as 4) === items(4, 4)
+    "be applied to Functor operators" in {
+      (items(1, 2) ∘ {_ + 1}) must equal(items(2, 3))
+      (items(1, 2) >| 5) must equal(items(5, 5))
+      (items(1, 2) as 4) must equal(items(4, 4))
 
-        items(1, 2).fpair === items((1, 1), (2, 2))
-        items(1, 2).fproduct {_ + 1} === items((1, 2), (2, 3))
-        items(1, 2).strengthL("x") === items(("x", 1), ("x", 2))
-        items(1, 2).strengthR("x") === items((1, "x"), (2, "x"))
-        Functor[Observable].lift {(_: Int) + 1}(items(1, 2)) === items(2, 3)
-      }
+      items(1, 2).fpair must equal(items((1, 1), (2, 2)))
+      items(1, 2).fproduct {_ + 1} must equal(items((1, 2), (2, 3)))
+      items(1, 2).strengthL("x") must equal(items(("x", 1), ("x", 2)))
+      items(1, 2).strengthR("x") must equal(items((1, "x"), (2, "x")))
+      Functor[Observable].lift {(_: Int) + 1}(items(1, 2)) must equal(items(2, 3))
     }
 
-    "Applicative Operators" >> {
-      "can apply to Observables" in {
-        1.point[Observable] === items(1)
-        1.η[Observable] === items(1)
-        (items(1, 2) |@| items(3, 4)) {_ + _} === items(4, 5, 5, 6)
+    "be applied to Applicative operators" in {
+      1.point[Observable] must equal(items(1))
+      1.η[Observable] must equal(items(1))
+      (items(1, 2) |@| items(3, 4)) {_ + _} must equal(items(4, 5, 5, 6))
 
-        (items(1) <*> {(_: Int) + 1}.η[Observable]) === items(2)
-        items(1) <*> {items(2) <*> {(_: Int) + (_: Int)}.curried.η[Observable]} === items(3)
-        items(1) <* items(2) === items(1)
-        items(1) *> items(2) === items(2)
+      (items(1) <*> {(_: Int) + 1}.η[Observable]) must equal(items(2))
+      items(1) <*> {items(2) <*> {(_: Int) + (_: Int)}.curried.η[Observable]} must equal(items(3))
+      items(1) <* items(2) must equal(items(1))
+      items(1) *> items(2) must equal(items(2))
 
-        Apply[Observable].ap(items(2)) {{(_: Int) + 3}.η[Observable]} === items(5)
-        Apply[Observable].lift2 {(_: Int) * (_: Int)}(items(1, 2), items(3, 4)) === items(3, 4, 6, 8)
-      }
+      Apply[Observable].ap(items(2)) {{(_: Int) + 3}.η[Observable]} must equal(items(5))
+      Apply[Observable].lift2 {(_: Int) * (_: Int)}(items(1, 2), items(3, 4)) must equal(items(3, 4, 6, 8))
     }
 
-    "Monad and MonadPlus Opeartors" >> {
-      "can apply to Observables" in {
-        (items(3) >>= {(i: Int) => items(i + 1)}) === items(4)
-        items(3) >> items(2) === items(2)
-        items(items(1, 2), items(3, 4)).μ === items(1, 2, 3, 4)
-        items(1, 2) <+> items(3, 4) === items(1, 2, 3, 4)
+    "be applied to Monad and MonadPlus operators" in {
+      (items(3) >>= {(i: Int) => items(i + 1)}) must equal(items(4))
+      (items(3) >> items(2)) must equal(items(2))
+      items(items(1, 2), items(3, 4)).μ must equal(items(1, 2, 3, 4))
+      (items(1, 2) <+> items(3, 4)) must equal(items(1, 2, 3, 4))
 
-        PlusEmpty[Observable].empty[Int] === Observable.empty
-      }
+      PlusEmpty[Observable].empty[Int] must equal(Observable.empty)
     }
-
-    "Traverse and Foldable Opearators" >> {
-      "can apply to Observables" in {
-        items(1, 2, 3).foldMap {_.toString} === "123"
-        items(1, 2, 3).foldLeftM(0)((acc, v) => (acc * v).some) === 6.some
-        items(1, 2, 3).suml === 6
-        items(1, 2, 3).∀(_ > 3) === true
-        items(1, 2, 3).∃(_ > 3) === false
-        items(1, 2, 3).traverse(x => (x + 1).some) === items(2, 3, 4).some
-        items(1.some, 2.some).sequence === items(1, 2).some
-      }
+    "be applied to Traverse operators" in {
+      items(1, 2, 3).foldMap {_.toString} must equal("123")
+      items(1, 2, 3).foldLeftM(0)((acc, v) => (acc + v).some) must equal(6.some)
+      items(1, 2, 3).suml must equal(6)
+      items(1, 2, 3).∀(_ > 0) must equal(true)
+      items(1, 2, 3).∃(_ > 2) must equal(true)
+      items(1, 2, 3).traverse(x => (x + 1).some) must equal(items(2, 3, 4).some)
+      items(1.some, 2.some).sequence must equal(items(1, 2).some)
     }
   }
 }
