@@ -41,11 +41,21 @@ object ImplicitsForTest {
     }
   }
 
+  implicit def observableTEqual[F[_], A](implicit F0: Equal[F[Observable[A]]]):Equal[ObservableT[F,A]]
+  = F0.contramap((_: ObservableT[F, A]).run)
+
   implicit def observableShow[A](implicit showA: Show[A], showLA:Show[List[A]])
-  = Show.shows[Observable[A]](ob => "Observable" +
-      Show.showContravariant.contramap[List[A],Observable[A]](showLA)(_.toBlocking.toList).show(ob))
+  = Show.shows[Observable[A]](ob =>
+      "Observable" + Show.showContravariant.contramap[List[A],Observable[A]](showLA)(_.toBlocking.toList).show(ob))
+
+  implicit def observableTShow[F[_], A](implicit show: Show[F[Observable[A]]])
+  = Show.shows[ObservableT[F, A]](obT =>
+      "ObservableT(" + Show.showContravariant.contramap[F[Observable[A]], ObservableT[F,A]](show)(_.run).show(obT) + ")")
 
   implicit def observableArbitrary[A](implicit a: Arbitrary[A], array: Arbitrary[Array[A]]): Arbitrary[Observable[A]]
   = Functor[Arbitrary].map(array)(Observable.items(_:_*))
+
+  implicit def observableTArbitrary[F[_], A](implicit A: Arbitrary[F[Observable[A]]]): Arbitrary[ObservableT[F, A]]
+  = Functor[Arbitrary].map(A)(ObservableT(_))
 
 }

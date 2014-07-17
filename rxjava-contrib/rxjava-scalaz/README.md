@@ -3,6 +3,8 @@ This provides some useful type class instances for `Observable`.  Therefore you 
 
 Provided type class instances are `Monoid`, `Monad`, `MonadPlus`, `Traverse`, `Foldable`, etc.
 
+This also provides `ObservableT` monad transformer for `Observable`.  Therefore you can compose arbitrary monad with `Observable` monad.
+
 For QuickStart, please refer to [RxScalazDemo](./src/test/scala/rx/lang/scala/scalaz/examples/RxScalazDemo.scala).
 
 ## How to use
@@ -21,7 +23,7 @@ Observable.items(1, 2) ∘ {_ + 1}                              // == Observable
 
 Some other useful operators are available.  Please see below for details.
 
-## Provided Typeclass Instances
+## Provided Typeclass Instances for Observable
 ### Monoid
 `Observable` obviously forms a monoid interms of  [`concat`](https://github.com/Netflix/RxJava/wiki/Mathematical-and-Aggregate-Operators#concat).
 
@@ -70,4 +72,23 @@ Observable.items(1, 2, 3).∀(_ > 3) === true
 Observable.items(1, 2, 3).∃(_ > 3) === false
 Observable.items(1, 2, 3).traverse(x => (x + 1).some) === Observable.items(2, 3, 4).some
 Observable.items(1.some, 2.some).sequence === Observable.items(1, 2).some
+```
+
+## Monad Transformer for Observable.
+This module provides `ObservableT` monad transformer.  You can compose Observable monad with arbitrary monad.
+
+### Example: "Composit monad `List[Observable[_]]`"
+
+```scala
+import scalaz._, Scalaz._
+import rx.lang.scala.Observable._
+import rx.lang.scala.scalaz._
+
+val ob1 = items(1,2,3,4)
+val map = Map(1 -> 10, 2 -> 20, 3 -> 30, 4 -> 40)
+(for {
+  i <- ObservableT(Option(ob1))
+  j <- map.get(i).liftM[ObservableT]
+} yield (i,j+1)) === ObservableT(Option(items((1,11),(2,21),(3,31),(4,41))))
+
 ```

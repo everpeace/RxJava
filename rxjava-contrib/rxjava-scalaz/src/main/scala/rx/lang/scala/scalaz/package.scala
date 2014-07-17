@@ -22,7 +22,7 @@ import _root_.scalaz.Tags.{Zip => TZip}
 /**
  * This package object provides some type class instances for Observable.
  */
-package object scalaz {
+package object scalaz extends ObservableTInstances {
 
   // Monoid
   implicit def observableMonoid[A] = new Monoid[Observable[A]] {
