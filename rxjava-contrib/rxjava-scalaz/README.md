@@ -64,6 +64,8 @@ Observable.items(1, 2) <+> Observable.items(3, 4) === Observable.items(1, 2, 3, 
 ### Traverse and Foldable
 `Observable` can be `Traverse` and `Foldable` as well as `Stream`.  This means you can fold `Observable` instance to single value.
 
+** CAUTION: ** Most of traverse operators are **blocking** operators.
+
 ```scala
 Observable.items(1, 2, 3).foldMap {_.toString} === "123"
 Observable.items(1, 2, 3).foldLeftM(0)((acc, v) => (acc * v).some) === 6.some
@@ -77,7 +79,9 @@ Observable.items(1.some, 2.some).sequence === Observable.items(1, 2).some
 ## Monad Transformer for Observable.
 This module provides `ObservableT` monad transformer.  You can compose Observable monad with arbitrary monad.
 
-### Example: "Composit monad `List[Observable[_]]`"
+** CAUTION: ** for any monad `M`, `bind (>>=, flatMap)` of `Observable[M,_]`(essentially `M[Observable[_]]`) are **blocking** operators.
+
+### Example: `ObservableT[List,_]`(essentially `List[Observable[_]])`) can be used as a composit monad.
 
 ```scala
 import scalaz._, Scalaz._
